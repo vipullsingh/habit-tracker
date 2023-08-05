@@ -1,45 +1,53 @@
-// Importing Modules
-const express = require('express')
-const path = require('path');
-const sassMiddleware = require('node-sass-middleware');
-const app = express();
-const moment = require('moment'); 
+//----------- Importing Modules -----------//
+const express = require('express');
+const expressLayouts = require('express-ejs-layouts');
 const mongoose = require('mongoose');
-const db= require('./config/mongoose');
-const expressLayout = require('express-ejs-layouts');
-const port = 5000
+const flash = require('connect-flash');
+const session = require('express-session');
 
-moment().format(); 
+const app = express();
 
-// ------SCSS ------//
-app.use(sassMiddleware({
-  src: path.join(__dirname, './assets/sass'),
-  dest: path.join(__dirname, './assets/css'),
-  debug: false,
-  outputStyle: 'compressed',
-  prefix:  '/css' 
-}));
+//-----DB Config---------//
+const db = require('./config/keys').MongoURI;
 
-app.use('/public', express.static(path.join(__dirname, 'public')));
+//------Connect to Mongo--------//
+mongoose.connect(db, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log("Connected to MongoDB successfully!"))
+    .catch(err => console.log(err));
 
-// ------Statics files ------ //
-app.use(express.static(path.join(__dirname,'./assets')))
-app.use(express.urlencoded());
+//-----EJS---------//
+app.use(expressLayouts);
+app.use("/assets", express.static('./assets'));
+app.set('view engine', 'ejs');
 
-// ----------EJS-----------//
-app.set('view engine','ejs');
-app.set('views',path.join(__dirname, 'views'));
+//------BodyParser--------//
+app.use(express.urlencoded({ extended: false }));
 
-// ------ EJS layouts ------//
-app.use(expressLayout);
-app.set('layout extractStyles',true);
-app.set('layout extractScripts',true);
+//---------Express Session----------//
+app.use(
+    session({
+        secret: 'secret',
+        resave: true,
+        saveUninitialized: true
+    })
+);
 
+//---------Connect Flash----------//
+app.use(flash());
 
-// ------Router------------//
-app.use('/',require('./routers/index'))
+//---------Global Variables----------//
+app.use(function (req, res, next) {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    res.locals.error = req.flash('error');
+    next();
+});
 
+//-----Routes---------//
+app.use('/', require('./routes/index'));
+app.use('/users', require('./routes/users'));
 
-app.listen(port, () => {
-  console.log(`Click this link to get started :  http://localhost:${port}`);
-})
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, console.log(`Server started on port  ${PORT}`));
+

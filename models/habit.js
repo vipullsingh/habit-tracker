@@ -1,23 +1,26 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-// Schema for habit
-const habitSchema = new mongoose.Schema({
-    user: {
+const HabitSchema = new mongoose.Schema({
+    content: {
         type: String,
         required: true
     },
-    habit_name: {
+    email: {
         type: String,
         required: true
     },
-    record_tracker: {
-        type: Map
+    dates: [{
+        date: String,
+        complete: String
+    }],
+    favorite: {
+        type: Boolean,
+        default: false
     }
-},{
-    timestamp: true
-})
+}, {
+    timestamps: true
+});
 
-// creating a model for habit schema
-const Habit = mongoose.model("Habit", habitSchema);
+const Habit = mongoose.model('Habit', HabitSchema);
 
 module.exports = Habit;
